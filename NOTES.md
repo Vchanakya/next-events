@@ -184,4 +184,7 @@ backend/
 
 ## Final Notes
 
-Time constraints led to some simplifications (Mantine vs TailwindCSS, no authentication), but the core functionality meets all requirements and provides a solid foundation for future development.
+1. Time constraints led to some simplifications (Mantine vs TailwindCSS, no authentication), but the core functionality meets all requirements and provides a solid foundation for future development.
+2. Could add error boundaries for better error handling
+3. Unit tests would strengthen the codebase
+4. Optimistic UI updates would enhance UX
