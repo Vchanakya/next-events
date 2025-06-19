@@ -34,7 +34,7 @@
     "node_modules"
   ],
   "paths": {
-    "@/*": ["./src/*"],
+    "@/*": ["./*"],
     "@graphql/*": ["./graphql/*"]
   }
 }

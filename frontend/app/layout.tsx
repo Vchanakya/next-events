@@ -1,6 +1,6 @@
 import "@mantine/core/styles.css";
 import "@mantine/dates/styles.css";
-import React, { useState } from "react";
+import React from "react";
 import {
   MantineProvider,
   ColorSchemeScript,
@@ -8,13 +8,18 @@ import {
 } from "@mantine/core";
 import { theme } from "../theme";
 import ApolloWrapper from "../components/ApolloWrapper";
+import { AppShellComponent } from "../components/AppShellComponent";
 
 export const metadata = {
-  title: "NextJS Event Manager",
-  description: "NextJS Event Manager",
+  title: "Event Manager",
+  description: "Manage your events and attendees",
 };
 
-export default function RootLayout({ children }: { children: any }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en" {...mantineHtmlProps}>
       <head>
@@ -27,7 +32,9 @@ export default function RootLayout({ children }: { children: any }) {
       </head>
       <body>
         <ApolloWrapper>
-          <MantineProvider theme={theme}>{children}</MantineProvider>
+          <MantineProvider theme={theme}>
+            <AppShellComponent>{children}</AppShellComponent>
+          </MantineProvider>
         </ApolloWrapper>
       </body>
     </html>

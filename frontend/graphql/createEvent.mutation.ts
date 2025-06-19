@@ -6,6 +6,8 @@ export const CREATE_EVENT = gql`
       id
       title
       date
+      attendeeCount
+      createdAt
     }
   }
 `;
