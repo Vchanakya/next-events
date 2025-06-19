@@ -13,6 +13,7 @@ export const GET_EVENT = gql`
             id
             name
             email
+            rsvp
           }
         }
         pageInfo {

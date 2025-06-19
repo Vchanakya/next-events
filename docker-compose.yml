@@ -1,0 +1,38 @@
+services:
+  # GraphQL Backend Server
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+    networks:
+      - event-manager-network
+
+  # Next.js Frontend Application
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_GRAPHQL_URL=http://backend:3001/graphql
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+    networks:
+      - event-manager-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+networks:
+  event-manager-network:
+    driver: bridge

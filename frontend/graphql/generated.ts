@@ -19,31 +19,77 @@ export type Scalars = {
 
 export type Attendee = {
   __typename?: 'Attendee';
-  email: Scalars['String']['output'];
+  createdAt: Scalars['String']['output'];
+  email?: Maybe<Scalars['String']['output']>;
+  eventId: Scalars['ID']['output'];
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
   rsvp: Scalars['String']['output'];
 };
 
+export type AttendeeConnection = {
+  __typename?: 'AttendeeConnection';
+  edges: Array<AttendeeEdge>;
+  pageInfo: PageInfo;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type AttendeeEdge = {
+  __typename?: 'AttendeeEdge';
+  cursor: Scalars['String']['output'];
+  node: Attendee;
+};
+
 export type Event = {
   __typename?: 'Event';
-  attendees: Array<Attendee>;
+  attendeeCount: Scalars['Int']['output'];
+  attendees: AttendeeConnection;
+  createdAt: Scalars['String']['output'];
   date: Scalars['String']['output'];
   id: Scalars['ID']['output'];
-  tags: Array<Tag>;
   title: Scalars['String']['output'];
 };
+
+
+export type EventAttendeesArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type EventConnection = {
+  __typename?: 'EventConnection';
+  edges: Array<EventEdge>;
+  pageInfo: PageInfo;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type EventEdge = {
+  __typename?: 'EventEdge';
+  cursor: Scalars['String']['output'];
+  node: Event;
+};
+
+export type EventOrderBy = {
+  direction: OrderDirection;
+  field: EventOrderByField;
+};
+
+export enum EventOrderByField {
+  CreatedAt = 'CREATED_AT',
+  Date = 'DATE',
+  Title = 'TITLE'
+}
 
 export type Mutation = {
   __typename?: 'Mutation';
   addAttendee: Attendee;
   createEvent: Event;
-  removeAttendee: Scalars['Boolean']['output'];
+  removeAttendee: Event;
 };
 
 
 export type MutationAddAttendeeArgs = {
-  email: Scalars['String']['input'];
+  email?: InputMaybe<Scalars['String']['input']>;
   eventId: Scalars['ID']['input'];
   name: Scalars['String']['input'];
   rsvp: Scalars['String']['input'];
@@ -61,10 +107,30 @@ export type MutationRemoveAttendeeArgs = {
   eventId: Scalars['ID']['input'];
 };
 
+export type MutationResponse = {
+  __typename?: 'MutationResponse';
+  event?: Maybe<Event>;
+  message?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+};
+
+export enum OrderDirection {
+  Asc = 'ASC',
+  Desc = 'DESC'
+}
+
+export type PageInfo = {
+  __typename?: 'PageInfo';
+  endCursor?: Maybe<Scalars['String']['output']>;
+  hasNextPage: Scalars['Boolean']['output'];
+  hasPreviousPage: Scalars['Boolean']['output'];
+  startCursor?: Maybe<Scalars['String']['output']>;
+};
+
 export type Query = {
   __typename?: 'Query';
   event?: Maybe<Event>;
-  events: Array<Event>;
+  events: EventConnection;
 };
 
 
@@ -72,21 +138,22 @@ export type QueryEventArgs = {
   id: Scalars['ID']['input'];
 };
 
-export type Tag = {
-  __typename?: 'Tag';
-  id: Scalars['ID']['output'];
-  label: Scalars['String']['output'];
+
+export type QueryEventsArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  orderBy?: InputMaybe<EventOrderBy>;
 };
 
 export type AddAttendeeMutationVariables = Exact<{
   eventId: Scalars['ID']['input'];
   name: Scalars['String']['input'];
-  email: Scalars['String']['input'];
+  email?: InputMaybe<Scalars['String']['input']>;
   rsvp: Scalars['String']['input'];
 }>;
 
 
-export type AddAttendeeMutation = { __typename?: 'Mutation', addAttendee: { __typename?: 'Attendee', id: string, name: string, email: string, rsvp: string } };
+export type AddAttendeeMutation = { __typename?: 'Mutation', addAttendee: { __typename?: 'Attendee', id: string, name: string, email?: string | null, rsvp: string, eventId: string, createdAt: string } };
 
 export type CreateEventMutationVariables = Exact<{
   title: Scalars['String']['input'];
@@ -94,19 +161,25 @@ export type CreateEventMutationVariables = Exact<{
 }>;
 
 
-export type CreateEventMutation = { __typename?: 'Mutation', createEvent: { __typename?: 'Event', id: string, title: string, date: string } };
+export type CreateEventMutation = { __typename?: 'Mutation', createEvent: { __typename?: 'Event', id: string, title: string, date: string, attendeeCount: number, createdAt: string } };
 
-export type GetEventByIdQueryVariables = Exact<{
+export type GetEventQueryVariables = Exact<{
   id: Scalars['ID']['input'];
+  attendeesFirst?: InputMaybe<Scalars['Int']['input']>;
+  attendeesAfter?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 
-export type GetEventByIdQuery = { __typename?: 'Query', event?: { __typename?: 'Event', id: string, title: string, date: string, attendees: Array<{ __typename?: 'Attendee', id: string, name: string, email: string, rsvp: string }> } | null };
+export type GetEventQuery = { __typename?: 'Query', event?: { __typename?: 'Event', id: string, title: string, date: string, attendeeCount: number, createdAt: string, attendees: { __typename?: 'AttendeeConnection', totalCount: number, edges: Array<{ __typename?: 'AttendeeEdge', cursor: string, node: { __typename?: 'Attendee', id: string, name: string, email?: string | null, rsvp: string } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } } | null };
 
-export type GetEventsQueryVariables = Exact<{ [key: string]: never; }>;
+export type GetEventsQueryVariables = Exact<{
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+  orderBy?: InputMaybe<EventOrderBy>;
+}>;
 
 
-export type GetEventsQuery = { __typename?: 'Query', events: Array<{ __typename?: 'Event', id: string, title: string, date: string, attendees: Array<{ __typename?: 'Attendee', id: string }> }> };
+export type GetEventsQuery = { __typename?: 'Query', events: { __typename?: 'EventConnection', totalCount: number, edges: Array<{ __typename?: 'EventEdge', cursor: string, node: { __typename?: 'Event', id: string, title: string, date: string, attendeeCount: number, createdAt: string } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
 export type RemoveAttendeeMutationVariables = Exact<{
   eventId: Scalars['ID']['input'];
@@ -114,16 +187,18 @@ export type RemoveAttendeeMutationVariables = Exact<{
 }>;
 
 
-export type RemoveAttendeeMutation = { __typename?: 'Mutation', removeAttendee: boolean };
+export type RemoveAttendeeMutation = { __typename?: 'Mutation', removeAttendee: { __typename?: 'Event', id: string, title: string, date: string, attendeeCount: number, createdAt: string, attendees: { __typename?: 'AttendeeConnection', totalCount: number, edges: Array<{ __typename?: 'AttendeeEdge', cursor: string, node: { __typename?: 'Attendee', id: string, name: string, email?: string | null, rsvp: string } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } } };
 
 
 export const AddAttendeeDocument = gql`
-    mutation AddAttendee($eventId: ID!, $name: String!, $email: String!, $rsvp: String!) {
+    mutation AddAttendee($eventId: ID!, $name: String!, $email: String, $rsvp: String!) {
   addAttendee(eventId: $eventId, name: $name, email: $email, rsvp: $rsvp) {
     id
     name
     email
     rsvp
+    eventId
+    createdAt
   }
 }
     `;
@@ -162,6 +237,8 @@ export const CreateEventDocument = gql`
     id
     title
     date
+    attendeeCount
+    createdAt
   }
 }
     `;
@@ -192,63 +269,90 @@ export function useCreateEventMutation(baseOptions?: Apollo.MutationHookOptions<
 export type CreateEventMutationHookResult = ReturnType<typeof useCreateEventMutation>;
 export type CreateEventMutationResult = Apollo.MutationResult<CreateEventMutation>;
 export type CreateEventMutationOptions = Apollo.BaseMutationOptions<CreateEventMutation, CreateEventMutationVariables>;
-export const GetEventByIdDocument = gql`
-    query GetEventById($id: ID!) {
+export const GetEventDocument = gql`
+    query GetEvent($id: ID!, $attendeesFirst: Int, $attendeesAfter: String) {
   event(id: $id) {
     id
     title
     date
-    attendees {
-      id
-      name
-      email
-      rsvp
+    attendees(first: $attendeesFirst, after: $attendeesAfter) {
+      edges {
+        cursor
+        node {
+          id
+          name
+          email
+          rsvp
+        }
+      }
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+      totalCount
     }
+    attendeeCount
+    createdAt
   }
 }
     `;
 
 /**
- * __useGetEventByIdQuery__
+ * __useGetEventQuery__
  *
- * To run a query within a React component, call `useGetEventByIdQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetEventByIdQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useGetEventQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetEventQuery` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useGetEventByIdQuery({
+ * const { data, loading, error } = useGetEventQuery({
  *   variables: {
  *      id: // value for 'id'
+ *      attendeesFirst: // value for 'attendeesFirst'
+ *      attendeesAfter: // value for 'attendeesAfter'
  *   },
  * });
  */
-export function useGetEventByIdQuery(baseOptions: Apollo.QueryHookOptions<GetEventByIdQuery, GetEventByIdQueryVariables> & ({ variables: GetEventByIdQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+export function useGetEventQuery(baseOptions: Apollo.QueryHookOptions<GetEventQuery, GetEventQueryVariables> & ({ variables: GetEventQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetEventByIdQuery, GetEventByIdQueryVariables>(GetEventByIdDocument, options);
+        return Apollo.useQuery<GetEventQuery, GetEventQueryVariables>(GetEventDocument, options);
       }
-export function useGetEventByIdLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetEventByIdQuery, GetEventByIdQueryVariables>) {
+export function useGetEventLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetEventQuery, GetEventQueryVariables>) {
           const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetEventByIdQuery, GetEventByIdQueryVariables>(GetEventByIdDocument, options);
+          return Apollo.useLazyQuery<GetEventQuery, GetEventQueryVariables>(GetEventDocument, options);
         }
-export function useGetEventByIdSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetEventByIdQuery, GetEventByIdQueryVariables>) {
+export function useGetEventSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetEventQuery, GetEventQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetEventByIdQuery, GetEventByIdQueryVariables>(GetEventByIdDocument, options);
+          return Apollo.useSuspenseQuery<GetEventQuery, GetEventQueryVariables>(GetEventDocument, options);
         }
-export type GetEventByIdQueryHookResult = ReturnType<typeof useGetEventByIdQuery>;
-export type GetEventByIdLazyQueryHookResult = ReturnType<typeof useGetEventByIdLazyQuery>;
-export type GetEventByIdSuspenseQueryHookResult = ReturnType<typeof useGetEventByIdSuspenseQuery>;
-export type GetEventByIdQueryResult = Apollo.QueryResult<GetEventByIdQuery, GetEventByIdQueryVariables>;
+export type GetEventQueryHookResult = ReturnType<typeof useGetEventQuery>;
+export type GetEventLazyQueryHookResult = ReturnType<typeof useGetEventLazyQuery>;
+export type GetEventSuspenseQueryHookResult = ReturnType<typeof useGetEventSuspenseQuery>;
+export type GetEventQueryResult = Apollo.QueryResult<GetEventQuery, GetEventQueryVariables>;
 export const GetEventsDocument = gql`
-    query GetEvents {
-  events {
-    id
-    title
-    date
-    attendees {
-      id
+    query GetEvents($first: Int, $after: String, $orderBy: EventOrderBy) {
+  events(first: $first, after: $after, orderBy: $orderBy) {
+    edges {
+      cursor
+      node {
+        id
+        title
+        date
+        attendeeCount
+        createdAt
+      }
     }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+    totalCount
   }
 }
     `;
@@ -265,6 +369,9 @@ export const GetEventsDocument = gql`
  * @example
  * const { data, loading, error } = useGetEventsQuery({
  *   variables: {
+ *      first: // value for 'first'
+ *      after: // value for 'after'
+ *      orderBy: // value for 'orderBy'
  *   },
  * });
  */
@@ -286,7 +393,31 @@ export type GetEventsSuspenseQueryHookResult = ReturnType<typeof useGetEventsSus
 export type GetEventsQueryResult = Apollo.QueryResult<GetEventsQuery, GetEventsQueryVariables>;
 export const RemoveAttendeeDocument = gql`
     mutation RemoveAttendee($eventId: ID!, $attendeeId: ID!) {
-  removeAttendee(eventId: $eventId, attendeeId: $attendeeId)
+  removeAttendee(eventId: $eventId, attendeeId: $attendeeId) {
+    id
+    title
+    date
+    attendees(first: 20) {
+      edges {
+        cursor
+        node {
+          id
+          name
+          email
+          rsvp
+        }
+      }
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+      totalCount
+    }
+    attendeeCount
+    createdAt
+  }
 }
     `;
 export type RemoveAttendeeMutationFn = Apollo.MutationFunction<RemoveAttendeeMutation, RemoveAttendeeMutationVariables>;

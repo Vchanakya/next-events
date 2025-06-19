@@ -12,6 +12,7 @@ export const typeDefs = `#graphql
     id: ID!
     name: String!
     email: String
+    rsvp: String!
     eventId: ID!
     createdAt: String!
   }
@@ -68,7 +69,7 @@ export const typeDefs = `#graphql
 
   type Mutation {
     createEvent(title: String!, date: String!): Event!
-    addAttendee(eventId: ID!, name: String!, email: String): Attendee!
+    addAttendee(eventId: ID!, name: String!, email: String, rsvp: String!): Attendee!
     removeAttendee(eventId: ID!, attendeeId: ID!): Event!
   }
 

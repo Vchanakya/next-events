@@ -6,16 +6,26 @@ export const REMOVE_ATTENDEE = gql`
       id
       title
       date
-      attendees(first: 10) {
+      attendees(first: 20) {
         edges {
+          cursor
           node {
             id
             name
             email
+            rsvp
           }
         }
+        pageInfo {
+          hasNextPage
+          hasPreviousPage
+          startCursor
+          endCursor
+        }
+        totalCount
       }
       attendeeCount
+      createdAt
     }
   }
 `;

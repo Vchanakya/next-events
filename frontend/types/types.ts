@@ -3,6 +3,7 @@ export interface Attendee {
   name: string;
   email?: string | null;
   eventId: string;
+  rsvp: string;
   createdAt: string;
 }
 

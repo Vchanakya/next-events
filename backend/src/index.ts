@@ -94,6 +94,7 @@ const seedData = () => {
     id: attendee1Id,
     name: "John Doe",
     email: "john@example.com",
+    rsvp: "ATTENDING",
     eventId: event1Id,
     createdAt: new Date().toISOString(),
   });
@@ -103,6 +104,7 @@ const seedData = () => {
     id: attendee2Id,
     name: "Jane Smith",
     email: "jane@example.com",
+    rsvp: "ATTENDING",
     eventId: event1Id,
     createdAt: new Date().toISOString(),
   });
@@ -121,7 +123,37 @@ const seedData = () => {
     id: attendee3Id,
     name: "Bob Johnson",
     email: null,
+    rsvp: "MAYBE",
     eventId: event2Id,
+    createdAt: new Date().toISOString(),
+  });
+
+  // Event 3 - Future event
+  const event3Id = uuidv4();
+  events.set(event3Id, {
+    id: event3Id,
+    title: "Product Launch Meeting",
+    date: "2025-07-15T09:00:00Z",
+    createdAt: new Date("2024-01-03").toISOString(),
+  });
+
+  const attendee4Id = uuidv4();
+  attendees.set(attendee4Id, {
+    id: attendee4Id,
+    name: "Alice Wilson",
+    email: "alice@example.com",
+    rsvp: "NOT_ATTENDING",
+    eventId: event3Id,
+    createdAt: new Date().toISOString(),
+  });
+
+  const attendee5Id = uuidv4();
+  attendees.set(attendee5Id, {
+    id: attendee5Id,
+    name: "Charlie Brown",
+    email: "charlie@example.com",
+    rsvp: "ATTENDING",
+    eventId: event3Id,
     createdAt: new Date().toISOString(),
   });
 };
@@ -182,7 +214,8 @@ export const resolvers = {
         eventId,
         name,
         email,
-      }: { eventId: string; name: string; email?: string }
+        rsvp = "ATTENDING",
+      }: { eventId: string; name: string; email?: string; rsvp?: string }
     ) => {
       const event = events.get(eventId);
       if (!event) {
@@ -194,6 +227,7 @@ export const resolvers = {
         id: attendeeId,
         name,
         email: email || null,
+        rsvp,
         eventId,
         createdAt: new Date().toISOString(),
       };
@@ -228,10 +262,13 @@ async function startServer() {
   });
 
   const { url } = await startStandaloneServer(server, {
-    listen: { port: 4000 },
+    listen: { port: 3001 },
   });
 
-  console.log(`Server ready at ${url}`);
+  console.log(`🚀 Server ready at ${url}`);
+  console.log(
+    `📊 Seeded with ${events.size} events and ${attendees.size} attendees`
+  );
 }
 
 startServer();

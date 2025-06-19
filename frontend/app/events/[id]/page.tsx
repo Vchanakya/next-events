@@ -27,8 +27,10 @@ import {
   Divider,
   Tooltip,
   LoadingOverlay,
+  Select,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
+import { showNotification } from "@mantine/notifications";
 import {
   IconCalendar,
   IconUsers,
@@ -38,21 +40,21 @@ import {
   IconAlertCircle,
   IconMail,
   IconUser,
+  IconCheck,
+  IconX,
+  IconQuestionMark,
 } from "@tabler/icons-react";
 import { GET_EVENT } from "../../../graphql/getEventById.query";
 import { ADD_ATTENDEE } from "../../../graphql/addAttendee.mutation";
 import { REMOVE_ATTENDEE } from "../../../graphql/removeAttendee.mutation";
-import {
-  GetEventData,
-  AddAttendeeData,
-  RemoveAttendeeData,
-} from "../../../types/types";
+import { GetEventData } from "../../../types/types";
 
-const ATTENDEES_PER_PAGE = 10;
+const ATTENDEES_PER_PAGE = 20;
 
 interface AttendeeFormValues {
   name: string;
   email: string;
+  rsvp: string;
 }
 
 const attendeeSchema = Yup.object().shape({
@@ -64,7 +66,36 @@ const attendeeSchema = Yup.object().shape({
     .email("Invalid email address")
     .max(100, "Email must be less than 100 characters")
     .notRequired(),
+  rsvp: Yup.string()
+    .oneOf(["ATTENDING", "NOT_ATTENDING", "MAYBE"], "Invalid RSVP status")
+    .required("RSVP status is required"),
 });
+
+const getRSVPColor = (rsvp: string) => {
+  switch (rsvp) {
+    case "ATTENDING":
+      return "green";
+    case "NOT_ATTENDING":
+      return "red";
+    case "MAYBE":
+      return "yellow";
+    default:
+      return "gray";
+  }
+};
+
+const getRSVPIcon = (rsvp: string) => {
+  switch (rsvp) {
+    case "ATTENDING":
+      return <IconCheck size={14} />;
+    case "NOT_ATTENDING":
+      return <IconX size={14} />;
+    case "MAYBE":
+      return <IconQuestionMark size={14} />;
+    default:
+      return null;
+  }
+};
 
 export default function EventDetailsPage() {
   const params = useParams();
@@ -72,95 +103,87 @@ export default function EventDetailsPage() {
   const id = params.id as string;
   const [opened, { open, close }] = useDisclosure(false);
 
-  const { loading, error, data, fetchMore } = useQuery<GetEventData>(
-    GET_EVENT,
+  const { loading, error, data, refetch } = useQuery<GetEventData>(GET_EVENT, {
+    variables: {
+      id,
+      attendeesFirst: ATTENDEES_PER_PAGE,
+    },
+    errorPolicy: "all",
+  });
+
+  const [addAttendee, { loading: addingAttendee }] = useMutation(ADD_ATTENDEE, {
+    onCompleted: () => {
+      close();
+      refetch();
+      showNotification({
+        title: "Success",
+        message: "Attendee added successfully!",
+        color: "green",
+      });
+    },
+    onError: (error) => {
+      showNotification({
+        title: "Error",
+        message: error.message,
+        color: "red",
+      });
+    },
+  });
+
+  const [removeAttendee, { loading: removingAttendee }] = useMutation(
+    REMOVE_ATTENDEE,
     {
-      variables: {
-        id,
-        attendeesFirst: ATTENDEES_PER_PAGE,
+      onCompleted: () => {
+        refetch();
+        showNotification({
+          title: "Success",
+          message: "Attendee removed successfully!",
+          color: "green",
+        });
+      },
+      onError: (error) => {
+        showNotification({
+          title: "Error",
+          message: error.message,
+          color: "red",
+        });
       },
     }
   );
 
-  const [addAttendee, { loading: addingAttendee }] =
-    useMutation<AddAttendeeData>(ADD_ATTENDEE, {
-      refetchQueries: [
-        {
-          query: GET_EVENT,
-          variables: { id, attendeesFirst: ATTENDEES_PER_PAGE },
-        },
-      ],
-      onCompleted: () => {
-        close();
-      },
-    });
-
-  const [removeAttendee, { loading: removingAttendee }] =
-    useMutation<RemoveAttendeeData>(REMOVE_ATTENDEE, {
-      refetchQueries: [
-        {
-          query: GET_EVENT,
-          variables: { id, attendeesFirst: ATTENDEES_PER_PAGE },
-        },
-      ],
-    });
-
-  const handleAddAttendee = async (values: AttendeeFormValues) => {
-    await addAttendee({
-      variables: {
-        eventId: id,
-        name: values.name.trim(),
-        email: values.email.trim() || undefined,
-      },
-    });
-  };
-
-  const handleRemoveAttendee = async (
-    attendeeId: string,
-    attendeeName: string
-  ) => {
-    if (
-      confirm(
-        `Are you sure you want to remove ${attendeeName} from this event?`
-      )
-    ) {
-      await removeAttendee({
+  const handleSubmit = async (values: AttendeeFormValues) => {
+    try {
+      await addAttendee({
         variables: {
           eventId: id,
-          attendeeId,
+          name: values.name.trim(),
+          email: values.email.trim() || null,
+          rsvp: values.rsvp,
         },
       });
+    } catch (error) {
+      console.error("Error adding attendee:", error);
     }
   };
 
-  const handleLoadMoreAttendees = () => {
-    if (data?.event?.attendees.pageInfo.hasNextPage) {
-      fetchMore({
-        variables: {
-          attendeesAfter: data.event.attendees.pageInfo.endCursor,
-        },
-        updateQuery: (prev, { fetchMoreResult }) => {
-          if (!fetchMoreResult?.event) return prev;
-          return {
-            event: {
-              ...fetchMoreResult.event,
-              attendees: {
-                ...fetchMoreResult.event.attendees,
-                edges: [
-                  ...prev.event!.attendees.edges,
-                  ...fetchMoreResult.event.attendees.edges,
-                ],
-              },
-            },
-          };
-        },
-      });
+  const handleRemoveAttendee = async (attendeeId: string) => {
+    if (window.confirm("Are you sure you want to remove this attendee?")) {
+      try {
+        await removeAttendee({
+          variables: {
+            eventId: id,
+            attendeeId,
+          },
+        });
+      } catch (error) {
+        console.error("Error removing attendee:", error);
+      }
     }
   };
 
-  if (loading && !data) {
+  if (loading) {
     return (
-      <Center h="50vh">
+      <Center h={200}>
         <Loader size="lg" />
       </Center>
     );
@@ -168,24 +191,16 @@ export default function EventDetailsPage() {
 
   if (error || !data?.event) {
     return (
-      <Container size="lg" mt="xl">
+      <Container size="lg" py="xl">
         <Alert icon={<IconAlertCircle size="1rem" />} title="Error" color="red">
           {error?.message || "Event not found"}
         </Alert>
-        <Button
-          mt="md"
-          variant="subtle"
-          leftSection={<IconArrowLeft size="1rem" />}
-          onClick={() => router.push("/events")}
-        >
-          Back to Events
-        </Button>
       </Container>
     );
   }
 
-  const { event } = data;
-  const attendees = event.attendees.edges.map((edge) => edge.node);
+  const event = data.event;
+  const attendees = event.attendees?.edges?.map((edge) => edge.node) || [];
 
   return (
     <Container size="lg" py="xl">
@@ -196,101 +211,111 @@ export default function EventDetailsPage() {
         <Text>{event.title}</Text>
       </Breadcrumbs>
 
-      <Card radius="md" withBorder shadow="sm" mb="xl">
-        <Group justify="space-between" mb="md">
-          <Title order={2}>{event.title}</Title>
-          <Button
-            variant="subtle"
-            leftSection={<IconArrowLeft size="1rem" />}
-            onClick={() => router.push("/events")}
-          >
-            Back
-          </Button>
-        </Group>
+      <Group justify="space-between" mb="xl">
+        <Button
+          variant="subtle"
+          leftSection={<IconArrowLeft size="1rem" />}
+          onClick={() => router.push("/events")}
+        >
+          Back to Events
+        </Button>
+      </Group>
 
-        <Stack gap="sm">
-          <Group gap="xs">
-            <IconCalendar size="1.2rem" color="var(--mantine-color-gray-6)" />
-            <Text>
-              {new Date(event.date).toLocaleDateString("en-US", {
-                weekday: "long",
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </Text>
-          </Group>
-          <Group gap="xs">
-            <IconUsers size="1.2rem" color="var(--mantine-color-gray-6)" />
-            <Badge variant="light" size="lg">
-              {event.attendeeCount}{" "}
-              {event.attendeeCount === 1 ? "attendee" : "attendees"}
+      <Stack gap="xl">
+        {/* Event Info */}
+        <Card radius="md" withBorder shadow="sm" p="xl">
+          <Group justify="space-between" mb="md">
+            <Title order={1}>{event.title}</Title>
+            <Badge size="lg" variant="light" color="blue">
+              {attendees.length} attendee{attendees.length !== 1 ? "s" : ""}
             </Badge>
           </Group>
-        </Stack>
-      </Card>
 
-      <Card radius="md" withBorder shadow="sm">
-        <Group justify="space-between" mb="lg">
-          <Title order={3}>Attendees</Title>
-          <Button leftSection={<IconUserPlus size="1.2rem" />} onClick={open}>
-            Add Attendee
-          </Button>
-        </Group>
+          <Group gap="xl">
+            <Group gap="sm">
+              <IconCalendar size="1.2rem" />
+              <div>
+                <Text fw={500}>Event Date</Text>
+                <Text c="dimmed">
+                  {new Date(event.date).toLocaleDateString("en-US", {
+                    weekday: "long",
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </Text>
+              </div>
+            </Group>
+            <Group gap="sm">
+              <IconUsers size="1.2rem" />
+              <div>
+                <Text fw={500}>Attendees</Text>
+                <Text c="dimmed">{event.attendeeCount} registered</Text>
+              </div>
+            </Group>
+          </Group>
+        </Card>
 
-        {attendees.length === 0 ? (
-          <Text ta="center" c="dimmed" py="xl">
-            No attendees yet. Add the first attendee!
-          </Text>
-        ) : (
-          <Box pos="relative">
-            <LoadingOverlay visible={removingAttendee} />
-            <Table striped highlightOnHover>
+        {/* Attendees Section */}
+        <Card radius="md" withBorder shadow="sm" p="xl">
+          <Group justify="space-between" mb="md">
+            <Title order={2}>Attendees</Title>
+            <Button leftSection={<IconUserPlus size="1rem" />} onClick={open}>
+              Add Attendee
+            </Button>
+          </Group>
+
+          {attendees.length === 0 ? (
+            <Text ta="center" c="dimmed" py="xl">
+              No attendees yet. Be the first to add one!
+            </Text>
+          ) : (
+            <Table>
               <Table.Thead>
                 <Table.Tr>
                   <Table.Th>Name</Table.Th>
                   <Table.Th>Email</Table.Th>
-                  <Table.Th style={{ width: 100 }}>Actions</Table.Th>
+                  <Table.Th>RSVP Status</Table.Th>
+                  <Table.Th w={80}>Actions</Table.Th>
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
                 {attendees.map((attendee) => (
                   <Table.Tr key={attendee.id}>
                     <Table.Td>
-                      <Group gap="xs">
-                        <IconUser
-                          size="1rem"
-                          color="var(--mantine-color-gray-6)"
-                        />
+                      <Group gap="sm">
+                        <IconUser size="1rem" />
                         <Text fw={500}>{attendee.name}</Text>
                       </Group>
                     </Table.Td>
                     <Table.Td>
                       {attendee.email ? (
-                        <Group gap="xs">
-                          <IconMail
-                            size="1rem"
-                            color="var(--mantine-color-gray-6)"
-                          />
+                        <Group gap="sm">
+                          <IconMail size="1rem" />
                           <Text>{attendee.email}</Text>
                         </Group>
                       ) : (
-                        <Text c="dimmed" fs="italic">
-                          No email provided
-                        </Text>
+                        <Text c="dimmed">No email</Text>
                       )}
+                    </Table.Td>
+                    <Table.Td>
+                      <Badge
+                        color={getRSVPColor(attendee.rsvp)}
+                        variant="light"
+                        leftSection={getRSVPIcon(attendee.rsvp)}
+                      >
+                        {attendee.rsvp.replace("_", " ")}
+                      </Badge>
                     </Table.Td>
                     <Table.Td>
                       <Tooltip label="Remove attendee">
                         <ActionIcon
                           color="red"
-                          variant="subtle"
-                          onClick={() =>
-                            handleRemoveAttendee(attendee.id, attendee.name)
-                          }
-                          disabled={removingAttendee}
+                          variant="light"
+                          onClick={() => handleRemoveAttendee(attendee.id)}
+                          loading={removingAttendee}
                         >
                           <IconTrash size="1rem" />
                         </ActionIcon>
@@ -300,84 +325,70 @@ export default function EventDetailsPage() {
                 ))}
               </Table.Tbody>
             </Table>
+          )}
+        </Card>
+      </Stack>
 
-            {event.attendees.pageInfo.hasNextPage && (
-              <Center mt="lg">
-                <Button
-                  onClick={handleLoadMoreAttendees}
-                  loading={loading}
-                  variant="default"
-                >
-                  Load More Attendees
-                </Button>
-              </Center>
-            )}
-          </Box>
-        )}
-      </Card>
-
-      <Modal
-        opened={opened}
-        onClose={close}
-        title="Add Attendee"
-        centered
-        size="md"
-      >
+      {/* Add Attendee Modal */}
+      <Modal opened={opened} onClose={close} title="Add New Attendee" size="md">
         <Formik
-          initialValues={{ name: "", email: "" }}
-          validationSchema={attendeeSchema}
-          onSubmit={async (values, { setSubmitting }) => {
-            try {
-              await handleAddAttendee(values);
-            } finally {
-              setSubmitting(false);
-            }
+          initialValues={{
+            name: "",
+            email: "",
+            rsvp: "ATTENDING",
           }}
+          validationSchema={attendeeSchema}
+          onSubmit={handleSubmit}
         >
-          {({
-            values,
-            errors,
-            touched,
-            isSubmitting,
-            setFieldValue,
-            setFieldTouched,
-          }) => (
+          {({ values, errors, touched, handleChange, handleBlur }) => (
             <Form>
               <Stack gap="md">
                 <TextInput
                   label="Name"
                   placeholder="Enter attendee name"
+                  name="name"
                   value={values.name}
-                  onChange={(e) => setFieldValue("name", e.currentTarget.value)}
-                  onBlur={() => setFieldTouched("name", true)}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
                   error={touched.name && errors.name}
                   required
-                  leftSection={<IconUser size="1rem" />}
                 />
+
                 <TextInput
                   label="Email"
-                  placeholder="Enter email (optional)"
+                  placeholder="Enter email address (optional)"
+                  name="email"
                   type="email"
                   value={values.email}
-                  onChange={(e) =>
-                    setFieldValue("email", e.currentTarget.value)
-                  }
-                  onBlur={() => setFieldTouched("email", true)}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
                   error={touched.email && errors.email}
-                  leftSection={<IconMail size="1rem" />}
                 />
-                <Divider />
-                <Group justify="flex-end">
-                  <Button
-                    variant="subtle"
-                    onClick={close}
-                    disabled={isSubmitting || addingAttendee}
-                  >
+
+                <Select
+                  label="RSVP Status"
+                  placeholder="Select RSVP status"
+                  name="rsvp"
+                  value={values.rsvp}
+                  onChange={(value) =>
+                    handleChange({ target: { name: "rsvp", value } })
+                  }
+                  data={[
+                    { value: "ATTENDING", label: "Attending" },
+                    { value: "NOT_ATTENDING", label: "Not Attending" },
+                    { value: "MAYBE", label: "Maybe" },
+                  ]}
+                  error={touched.rsvp && errors.rsvp}
+                  required
+                />
+
+                <Group justify="flex-end" mt="md">
+                  <Button variant="subtle" onClick={close}>
                     Cancel
                   </Button>
                   <Button
                     type="submit"
-                    loading={isSubmitting || addingAttendee}
+                    loading={addingAttendee}
                     disabled={!values.name.trim()}
                   >
                     Add Attendee

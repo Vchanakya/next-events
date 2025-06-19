@@ -1,11 +1,13 @@
 import "@mantine/core/styles.css";
 import "@mantine/dates/styles.css";
+import "@mantine/notifications/styles.css";
 import React from "react";
 import {
   MantineProvider,
   ColorSchemeScript,
   mantineHtmlProps,
 } from "@mantine/core";
+import { Notifications } from "@mantine/notifications";
 import { theme } from "../theme";
 import ApolloWrapper from "../components/ApolloWrapper";
 import { AppShellComponent } from "../components/AppShellComponent";
@@ -33,6 +35,7 @@ export default function RootLayout({
       <body>
         <ApolloWrapper>
           <MantineProvider theme={theme}>
+            <Notifications />
             <AppShellComponent>{children}</AppShellComponent>
           </MantineProvider>
         </ApolloWrapper>

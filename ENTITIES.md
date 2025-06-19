@@ -100,7 +100,7 @@ Tracks the many-to-many relationship between Events and Attendees with RSVP stat
 - `id`: string (UUID, primary key)
 - `eventId`: string (foreign key -> Event.id)
 - `attendeeId`: string (foreign key -> Attendee.id)
-- `rsvpStatus`: enum ['pending', 'confirmed', 'declined', 'maybe', 'no-show'] - Attendance status
+- `rsvpStatus`: enum ['ATTENDING', 'NOT_ATTENDING', 'MAYBE'] - Current implementation uses these values
 - `registeredAt`: datetime - Registration timestamp
 - `checkedInAt`: datetime (optional) - Actual attendance timestamp
 - `notes`: text (optional) - Special requirements or comments
@@ -179,7 +179,16 @@ Links events with their tags.
 3. **Scalability:**
    - Partition events table by date for large datasets
    - Consider separate analytics database for reporting
-   - Implement pagination for attendee lists
+   - Implement pagination for attendee lists (implemented with cursor-based pagination)
+
+## Current Implementation Notes
+
+The current GraphQL implementation includes:
+
+- **Simplified schema** without User authentication (events are created anonymously)
+- **Cursor-based pagination** for events and attendees
+- **RSVP status values**: `ATTENDING`, `NOT_ATTENDING`, `MAYBE`
+- **In-memory storage** for development/demo purposes
 
 ## Assumptions
 
@@ -187,6 +196,7 @@ Links events with their tags.
 
    - Users authenticate via email/password
    - Consider OAuth integration for future
+   - **Current**: No authentication implemented (simplified for demo)
 
 2. **Attendee Management:**
 
@@ -197,6 +207,7 @@ Links events with their tags.
 
    - Events transition through defined statuses
    - Historical data is preserved for analytics
+   - **Current**: Simplified lifecycle (events are always active)
 
 4. **Multi-tenancy:**
    - Current design assumes single organization
@@ -206,14 +217,17 @@ Links events with their tags.
 
 1. **Features:**
 
+   - User authentication and authorization
    - Recurring events
    - Event templates
    - Waitlist management
    - Email notifications
    - QR code check-in
+   - Event capacity limits
 
 2. **Entities to Consider:**
    - Organization (for multi-tenancy)
    - EventSession (for multi-day events)
    - Invitation (for private events)
    - Payment (for paid events)
+   - Notification (for email/SMS alerts)

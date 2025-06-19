@@ -123,7 +123,6 @@ export default function HomePage() {
       </Box>
 
       <Container size="lg" py="xl">
-        {/* Stats Section */}
         <SimpleGrid cols={{ base: 1, sm: 3 }} mb={60}>
           <Card radius="md" withBorder p="xl" shadow="sm">
             <Group justify="space-between">
@@ -224,7 +223,7 @@ export default function HomePage() {
                   Upcoming Events
                 </Title>
                 <Text c="dimmed" mt="xs">
-                  Don't miss out on these upcoming events
+                  {"Don't miss out on these upcoming events"}
                 </Text>
               </Box>
               <Button

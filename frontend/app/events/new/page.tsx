@@ -271,7 +271,7 @@ export default function CreateEventPage() {
       </Paper>
 
       <Text ta="center" size="sm" c="dimmed" mt="xl">
-        After creating the event, you'll be able to add attendees.
+        {"After creating the event, you'll be able to add attendees."}
       </Text>
     </Container>
   );
