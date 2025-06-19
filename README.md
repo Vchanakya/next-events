@@ -98,36 +98,4 @@ This is ONLY if you have extra time after completing the main features. It is pr
 
 The core assignment should take around 5–6 hours. Please prioritize functionality and clarity. Don’t worry about perfect CSS or scalability. You’ll have 3 days to complete it, but if you need a bit more time just let me know.
 
-## What We’re Looking For
-
-This assignment is meant to give us a signal on how you think and structure projects. It’s not about perfection.
-
-> **The goal is not only to make it work, but to write code that is clear, maintainable, and easy for others to understand and build upon.**
-
-We’re focusing on:
-
-- That the core features work as described
-- Clear, maintainable code structure and logical file organization (e.g., pretend this project will be worked on by multiple people and will grow over time)
-- Good use of TypeScript features (types, interfaces, generics) (e.g., no `any` types)
-- Thoughtful naming of variables, types, and components
-- A clean, extensible GraphQL schema
-- A well-reasoned and understandable ENTITIES.md file
-
-We’re not focusing on:
-
-- Handling millions of users
-- Pixel-perfect UI
-- Advanced animations, spinners, or transitions
-- Using every optional tech (Zustand, Headless UI, etc.) unless helpful
-
-## Use of AI Tools
-
-You’re welcome to use AI tools like ChatGPT, Copilot, or similar. Note, On the job you will be able to use services such as ChatGPT and Gemini. You may also be able to use AI code editors such as Cursor and Windsurf, though it's not a guarantee
-
-That said, we’re still looking to understand how you think and how you’d approach a real-world task, so please make sure your submission reflects your own understanding. Be ready to walk us through your code and decisions in a follow-up conversation if needed.
-
-## Questions?
-
-If you have any questions about the assignment, please feel free to reach out to Ryan or me at `aeskandari@snapchat.com`. We’re happy to clarify any requirements or provide additional context.
-
 ## Good luck!
